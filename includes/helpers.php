@@ -296,7 +296,7 @@ function get_dummy_users() {
 
 	if ( empty( $users ) ) {
 		// We use __DIR__ here because this file is loaded via Composer outside the context of plugin constants
-		$file = fopen( __DIR__ . '/data/users.csv', 'r' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fopen
+		$file = fopen( __DIR__ . '/data/users.csv', 'r' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 
 		$line = fgetcsv( $file );
 		while ( false !== $line ) {
@@ -313,8 +313,105 @@ function get_dummy_users() {
 			$line = fgetcsv( $file );
 		}
 
-		fclose( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
+		fclose( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 	}
 
 	return $users;
+}
+
+/**
+ * Retrieves an array of all user IDs from the database.
+ *
+ * @return array An array of user IDs.
+ */
+function get_all_user_ids() {
+	global $wpdb;
+
+	$query = "SELECT ID
+		FROM {$wpdb->users}";
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+	return $wpdb->get_col( $query );
+}
+
+/**
+ * Retrieves an array of all post IDs of a given post type.
+ *
+ * @param string $post_type The post type to retrieve post IDs for.
+ *
+ * @return array An array of post IDs.
+ */
+function get_all_post_ids_of_post_type( $post_type ) {
+	global $wpdb;
+
+	$query = "SELECT ID
+		FROM {$wpdb->posts}
+		WHERE post_type = %s";
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+	return $wpdb->get_col( $wpdb->prepare( $query, $post_type ) );
+}
+
+/**
+ * Retrieves an array of all revision IDs of a given post type.
+ *
+ * @param array $post_ids The post IDs to retrieve revision IDs for.
+ *
+ * @return array An array of revision IDs.
+ */
+function get_all_revision_ids_from_post_ids( $post_ids ) {
+	global $wpdb;
+
+	$post_ids   = array_map( 'esc_sql', $post_ids );
+	$post_ids   = array_map( 'intval', $post_ids );
+	$ids_string = implode( ',', $post_ids );
+
+	$query = "SELECT *
+		FROM wp_posts
+		WHERE post_type = 'revision'
+		AND post_parent IN ({$ids_string});";
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+	return $wpdb->get_col( $query );
+}
+
+/**
+ * Retrieves an array of all term IDs of a given taxonomy.
+ *
+ * @param string $taxonomy The taxonomy to retrieve term IDs for.
+ *
+ * @return array An array of term IDs.
+ */
+function get_all_term_ids_of_taxonomy( $taxonomy ) {
+	global $wpdb;
+
+	$query = "SELECT term_id
+		FROM {$wpdb->term_taxonomy}
+		WHERE taxonomy = %s";
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+	return $wpdb->get_col( $wpdb->prepare( $query, $taxonomy ) );
+}
+
+/**
+ * Get fake data based on the specified type.
+ *
+ * @param string $type The type of fake data to generate.
+ *
+ * @return mixed The generated fake data.
+ */
+function get_fake_data( string $type ) {
+	static $faker;
+
+	if ( ! $faker ) {
+		$faker = \Faker\Factory::create();
+	}
+
+	try {
+		$data = $faker->$type();
+	} catch ( \Exception $e ) {
+		$data = new \WP_Error( 'invalid_faker_type', 'Invalid faker type.' );
+	}
+
+	return $data;
 }

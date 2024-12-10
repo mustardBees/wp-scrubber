@@ -1,5 +1,6 @@
 {
   "name": "10up/wp-scrubber",
+  "description": "A WordPress plugin that scrubs sensitive data from the database.",
   "type": "wordpress-plugin",
   "license": "GPL-2.0-or-later",
   "authors": [
@@ -9,14 +10,19 @@
     }
   ],
   "require": {
-    "php": ">=7.3"
+    "php": ">=8.0",
+    "fakerphp/faker": "^1.23"
   },
   "require-dev": {
-    "10up/phpcs-composer": "dev-master"
+    "10up/phpcs-composer": "^3.0.0",
+    "10up/wp_mock": "^1.0",
+    "phpunit/phpunit": "^9.6",
+    "wp-cli/wp-cli": "^2.11"
   },
   "scripts": {
-    "lint": "phpcs .",
-    "lint-fix": "phpcbf ."
+    "lint": "phpcs -s .",
+    "lint-fix": "phpcbf .",
+	  "phpunit": "phpunit"
   },
   "autoload": {
     "psr-4": {
